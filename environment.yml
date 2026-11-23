@@ -1,0 +1,14 @@
+name: ctg-hypoxia-benchmark
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - scikit-image
+  - matplotlib
+  - pip
+  - pip:
+      - wfdb
