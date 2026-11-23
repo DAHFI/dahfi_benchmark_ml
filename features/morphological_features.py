@@ -34,8 +34,6 @@ Implementation
    shallow tails are not included and consecutive decelerations that almost return to the
    baseline are not merged.
 
-No data leakage: everything is computed from a single record.
-
 References
 [1] Ayres-de-Campos D, Spong CY, Chandraharan E; FIGO Intrapartum Fetal Monitoring
     Expert Consensus Panel. FIGO consensus guidelines on intrapartum fetal monitoring:
@@ -73,7 +71,9 @@ ONSET_BPM = 5.0  # an event starts/ends when |FHR - baseline| exceeds this value
 def _rolling(x, win, how):
     """Centred running mean or median that ignores NaN."""
     r = pd.Series(x).rolling(int(win), center=True, min_periods=1)
-    return np.array(r.median() if how == "median" else r.mean(), dtype=float)  # writable copy
+    return np.array(
+        r.median() if how == "median" else r.mean(), dtype=float
+    )  # writable copy
 
 
 def _fill(x):
@@ -104,8 +104,13 @@ def clean_jumps(signal, fs=FS, threshold=20.0, window_s=5.0):
 # --------------------------------------------------------------------------
 # Baseline
 # --------------------------------------------------------------------------
-def get_baseline_curve(signal, fs=FS, window_s=600.0, bands=(25.0, 20.0, 15.0, 10.0),
-                       asymmetric=ASYMMETRIC_BASELINE):
+def get_baseline_curve(
+    signal,
+    fs=FS,
+    window_s=600.0,
+    bands=(25.0, 20.0, 15.0, 10.0),
+    asymmetric=ASYMMETRIC_BASELINE,
+):
     """
     Baseline curve by iterative exclusion (inspired by Mantel et al. [3]).
 
@@ -127,7 +132,9 @@ def get_baseline_curve(signal, fs=FS, window_s=600.0, bands=(25.0, 20.0, 15.0, 1
     b = _fill(_rolling(x, win, "median"))
     for thr in bands:
         d = x - b
-        keep = valid & (((d >= -thr / 2) & (d <= thr)) if asymmetric else (np.abs(d) <= thr))
+        keep = valid & (
+            ((d >= -thr / 2) & (d <= thr)) if asymmetric else (np.abs(d) <= thr)
+        )
         if keep.sum() < 2:
             break
         b = _fill(_rolling(np.where(keep, x, np.nan), win, "mean"))
@@ -183,14 +190,21 @@ def get_events(
         x = clean_jumps(x, fs)
     if not (~np.isnan(x)).any():
         return []
-    b = get_baseline_curve(x, fs) if baseline_curve is None else np.asarray(baseline_curve, float)
+    b = (
+        get_baseline_curve(x, fs)
+        if baseline_curve is None
+        else np.asarray(baseline_curve, float)
+    )
 
     xs = _rolling(x, max(1, int(round(smooth_s * fs))), "mean")
     xs[np.isnan(x)] = np.nan  # smoothing does not fill gaps
     r = xs - b
 
     events = []
-    for kind, mask in (("acc", r > onset), ("dec", r < -onset)):  # NaN -> False: cut at gaps
+    for kind, mask in (
+        ("acc", r > onset),
+        ("dec", r < -onset),
+    ):  # NaN -> False: cut at gaps
         for s, e in zip(*_runs(mask)):
             dur = (e - s) / fs
             seg = r[s:e]
@@ -200,25 +214,28 @@ def get_events(
             else:
                 ok = amp > dec_amp and dec_min_s < dur <= dec_max_s
             if ok:
-                events.append({
-                    "type": kind,
-                    "start": int(s),
-                    "end": int(e),
-                    "duration_s": dur,
-                    "amplitude": amp,
-                    "area": float(np.abs(seg).sum() / fs),
-                })
+                events.append(
+                    {
+                        "type": kind,
+                        "start": int(s),
+                        "end": int(e),
+                        "duration_s": dur,
+                        "amplitude": amp,
+                        "area": float(np.abs(seg).sum() / fs),
+                    }
+                )
     events.sort(key=lambda ev: ev["start"])
     return events
 
 
 def get_event_mask(signal, fs=FS, **kwargs):
     """Boolean mask (True at samples belonging to an acceleration or deceleration).
-    Used by the linear features to exclude events, as indicated by FIGO [1] and Dawes-Redman."""
+    Used by the linear features to exclude events, as indicated by FIGO [1] and Dawes-Redman.
+    """
     x = np.asarray(signal, dtype=float)
     mask = np.zeros(x.size, dtype=bool)
     for ev in get_events(x, fs, **kwargs):
-        mask[ev["start"]:ev["end"]] = True
+        mask[ev["start"] : ev["end"]] = True
     return mask
 
 
@@ -256,7 +273,9 @@ def get_morphological_features(signals, fhr=True, fs=FS):
     fhr=False: array (1, n_signals) -> baseline
     """
     rows = [analyze_single_ctg(s, fhr=fhr, fs=fs) for s in signals]
-    morphological = np.array(rows, dtype=float).T if fhr else np.array([rows], dtype=float)
+    morphological = (
+        np.array(rows, dtype=float).T if fhr else np.array([rows], dtype=float)
+    )
     if np.isnan(morphological).any():
         print("WARNING morphological features: NaN values")
     return morphological

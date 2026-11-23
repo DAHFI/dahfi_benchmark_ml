@@ -1,0 +1,8 @@
+,mean_rank
+LASSO,2.135
+RF,2.41
+RIDGE,2.605
+SVM,3.81
+ANN,4.86
+DT,5.69
+KNN,6.49

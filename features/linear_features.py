@@ -18,8 +18,6 @@ and Dawes-Redman [1, 2] excludes minutes with decelerations from the LTV. With
 exclude_events=True (default), minutes containing an acceleration or deceleration
 (detected in morphological_features) do not count for LTV or delta.
 
-No data leakage: everything is computed from a single record.
-
 References
 [1] Dawes GS, Moulden M, Redman CWG. System 8000: computerized antenatal FHR analysis.
     J Perinat Med. 1991;19(1-2):47-51.
@@ -59,7 +57,9 @@ def _epoch_means(x, ep, min_valid):
     n_ep = x.size // ep
     blocks = x[: n_ep * ep].reshape(n_ep, ep)
     n_ok = np.sum(~np.isnan(blocks), axis=1)
-    return np.where(n_ok >= min_valid * ep, np.nansum(blocks, axis=1) / np.maximum(n_ok, 1), np.nan)
+    return np.where(
+        n_ok >= min_valid * ep, np.nansum(blocks, axis=1) / np.maximum(n_ok, 1), np.nan
+    )
 
 
 def _minutes_with_events(event_mask, n_win, block):
@@ -98,7 +98,15 @@ def get_STV(signal, fs=FS, epoch_s=3.75, window_s=60.0, min_valid=0.5, units="ms
     return float(np.mean(np.nansum(d[keep], axis=1) / n_d[keep]))
 
 
-def get_LTV(signal, fs=FS, epoch_s=3.75, window_s=60.0, min_valid=0.5, units="ms", event_mask=None):
+def get_LTV(
+    signal,
+    fs=FS,
+    epoch_s=3.75,
+    window_s=60.0,
+    min_valid=0.5,
+    units="ms",
+    event_mask=None,
+):
     """
     Long-Term Variation, Dawes-Redman [1, 2].
 
@@ -121,7 +129,15 @@ def get_LTV(signal, fs=FS, epoch_s=3.75, window_s=60.0, min_valid=0.5, units="ms
     return float(np.mean(np.nanmax(w[keep], axis=1) - np.nanmin(w[keep], axis=1)))
 
 
-def get_delta(signal, fs=FS, window_s=60.0, q=(2.5, 97.5), min_valid=0.5, agg="mean", event_mask=None):
+def get_delta(
+    signal,
+    fs=FS,
+    window_s=60.0,
+    q=(2.5, 97.5),
+    min_valid=0.5,
+    agg="mean",
+    event_mask=None,
+):
     """
     Baseline variability, FIGO [3]: amplitude of the FHR oscillations in 1-min segments,
     excluding accelerations and decelerations (event_mask).
@@ -185,14 +201,16 @@ def get_linear_features(signals, fs=FS, units="ms", exclude_events=True):
             continue
 
         mask = get_event_mask(x, fs) if exclude_events else None
-        rows.append([
-            float(np.nanmean(x)),
-            float(np.nanstd(x)),
-            get_LTV(x, fs=fs, units=units, event_mask=mask),
-            get_delta(x, fs=fs, event_mask=mask)[0],
-            get_STV(x, fs=fs, units=units),
-            get_II(x, fs=fs, units=units),
-        ])
+        rows.append(
+            [
+                float(np.nanmean(x)),
+                float(np.nanstd(x)),
+                get_LTV(x, fs=fs, units=units, event_mask=mask),
+                get_delta(x, fs=fs, event_mask=mask)[0],
+                get_STV(x, fs=fs, units=units),
+                get_II(x, fs=fs, units=units),
+            ]
+        )
 
     linear = np.array(rows, dtype=float)
     if np.isnan(linear).any():

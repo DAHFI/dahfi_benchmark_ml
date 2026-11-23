@@ -19,8 +19,6 @@ straight lines would create artificial regularity and lower all three measures.
 SampEn is undefined when there are no matches (A = 0 or B = 0) [2]: NaN is returned.
 These NaN must be imputed inside the model Pipeline, not here.
 
-No data leakage: everything is computed from a single record.
-
 References
 [1] Pincus SM. Approximate entropy as a measure of system complexity.
     Proc Natl Acad Sci USA. 1991;88(6):2297-2301.
@@ -57,7 +55,9 @@ def epoch_series(signal, fs=FS, epoch_s=2.5, min_valid=0.5, units="ms"):
     n_ep = x.size // ep
     blocks = x[: n_ep * ep].reshape(n_ep, ep)
     n_ok = np.sum(~np.isnan(blocks), axis=1)
-    return np.where(n_ok >= min_valid * ep, np.nansum(blocks, axis=1) / np.maximum(n_ok, 1), np.nan)
+    return np.where(
+        n_ok >= min_valid * ep, np.nansum(blocks, axis=1) / np.maximum(n_ok, 1), np.nan
+    )
 
 
 def _templates(y, m):
@@ -196,18 +196,22 @@ def get_nonlinear_features(signals, fs=FS, epoch_s=2.5, units="ms"):
     rows = []
     for signal in signals:
         y = epoch_series(signal, fs, epoch_s, units=units)
-        rows.append([
-            approximate_entropy(y, 2, 0.15),
-            approximate_entropy(y, 2, 0.20),
-            sample_entropy(y, 2, 0.15),
-            sample_entropy(y, 2, 0.20),
-            lempel_ziv_complexity(y),
-        ])
+        rows.append(
+            [
+                approximate_entropy(y, 2, 0.15),
+                approximate_entropy(y, 2, 0.20),
+                sample_entropy(y, 2, 0.15),
+                sample_entropy(y, 2, 0.20),
+                lempel_ziv_complexity(y),
+            ]
+        )
     nonlinear = np.array(rows, dtype=float).T
 
     names = ["ApEn015", "ApEn020", "SampEn015", "SampEn020", "LZC"]
     for name, values in zip(names, nonlinear):
         bad = ~np.isfinite(values)
         if bad.any():
-            print(f"WARNING: {bad.sum()} non-finite values in {name} (signals {np.flatnonzero(bad)})")
+            print(
+                f"WARNING: {bad.sum()} non-finite values in {name} (signals {np.flatnonzero(bad)})"
+            )
     return nonlinear

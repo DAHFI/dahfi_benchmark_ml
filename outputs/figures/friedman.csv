@@ -1,0 +1,4 @@
+factor,test,k,blocks,statistic,p,kendall_W,CD_nemenyi,alpha
+Preprocessing,Friedman,5,140,111.937143,0.0,0.199888,0.515544,0.05
+Feature set,Friedman,4,175,144.728988,0.0,0.275674,0.354556,0.05
+Classifier,Friedman,7,100,381.159136,0.0,0.635265,0.900934,0.05
