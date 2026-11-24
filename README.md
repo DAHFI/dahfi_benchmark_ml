@@ -122,21 +122,11 @@ hyperparameter grid of every model.
 
 ## Citation
 
-If you use this code, please cite:
-
-```bibtex
-@inproceedings{alonso2027benchmark,
-  title     = {What Really Matters for Intrapartum Fetal Hypoxia Detection? A Benchmark of Machine Learning Pipelines},
-  author    = {Alonso, Sara B. and Alaiz, Carlos M. and Fern{\'a}ndez-Pascual, {\'A}ngela},
-  booktitle = {Proceedings of the European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning (ESANN)},
-  year      = {2027}
-}
-```
-
-The CTU-UHB database should also be cited:
+The CTU-UHB database:
 Chudáček V, Spilka J, Burša M, et al. *Open access intrapartum CTG database.*
 BMC Pregnancy Childbirth. 2014;14:16.
 
 ## License
 
 MIT (see `LICENSE`).
+s
